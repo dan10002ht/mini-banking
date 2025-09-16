@@ -1,5 +1,6 @@
 package com.minibanking.entity;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -14,19 +15,23 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "customers")
+@Schema(description = "Customer entity representing a bank customer")
 public class Customer {
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "customer_id")
+    @Schema(description = "Unique customer identifier", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID customerId;
     
     @Column(name = "customer_code", unique = true, nullable = false, length = 20)
     @NotBlank(message = "Customer code is required")
+    @Schema(description = "Unique customer code", example = "CUST001")
     private String customerCode;
     
     @Column(name = "first_name", nullable = false, length = 100)
     @NotBlank(message = "First name is required")
+    @Schema(description = "Customer's first name", example = "John")
     private String firstName;
     
     @Column(name = "last_name", nullable = false, length = 100)

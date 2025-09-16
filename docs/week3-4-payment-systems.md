@@ -170,19 +170,61 @@ public class SWIFTNetworkService {
 
 ### ACH vs SWIFT vs VISA/Mastercard
 
-| Feature      | ACH               | SWIFT           | VISA/Mastercard |
-| ------------ | ----------------- | --------------- | --------------- |
-| **Cost**     | Low (0.1-0.5 USD) | High (5-50 USD) | High (1-3%)     |
-| **Speed**    | Slow (1-3 days)   | Slow (1-5 days) | Real-time       |
-| **Scope**    | Domestic          | International   | Global          |
-| **Volume**   | High              | Medium          | High            |
-| **Security** | Medium            | High            | High            |
+| Feature          | ACH (Traditional) | ACH (Real-time) | SWIFT           | VISA/Mastercard |
+| ---------------- | ----------------- | --------------- | --------------- | --------------- |
+| **Cost**         | Low (0.1-0.5 USD) | Low-Medium      | High (5-50 USD) | High (1-3%)     |
+| **Speed**        | Slow (1-3 days)   | Real-time       | Slow (1-5 days) | Real-time       |
+| **Scope**        | Domestic          | Domestic        | International   | Global          |
+| **Volume**       | High              | High            | Medium          | High            |
+| **Security**     | Medium            | High            | High            | High            |
+| **Availability** | Business hours    | 24/7            | Business hours  | 24/7            |
 
 ### Use Cases
 
-- **ACH**: Direct deposit, bill payment, domestic transfers
+- **ACH (Traditional)**: Direct deposit, bill payment, scheduled transfers
+- **ACH (Real-time)**: Instant P2P, urgent payments, real-time transfers
 - **SWIFT**: International wire transfers, trade finance
 - **VISA/Mastercard**: POS, online payments, ATM withdrawals
+
+## 🚀 Real-time Payment Systems (2024)
+
+### Modern ACH Systems
+
+**1. FedNow (Mỹ, 2023)**
+
+- Real-time ACH payments
+- 24/7 availability
+- Instant settlement
+- 35+ banks participating
+
+**2. RTP (Real-Time Payments, Mỹ)**
+
+- The Clearing House network
+- 71% of US deposit accounts
+- 24/7 instant payments
+
+**3. NAPAS (Việt Nam)**
+
+- Real-time interbank transfers
+- Instant domestic payments
+- 24/7 availability
+
+**4. Other Global Systems**
+
+- **UK**: Faster Payments
+- **EU**: SEPA Instant Credit Transfer
+- **India**: UPI (Unified Payments Interface)
+- **China**: CNAPS (China National Advanced Payment System)
+
+### Real-time vs Traditional ACH
+
+| Aspect           | Traditional ACH    | Real-time ACH     |
+| ---------------- | ------------------ | ----------------- |
+| **Speed**        | 1-3 business days  | Instant (seconds) |
+| **Cost**         | Very low           | Low-Medium        |
+| **Availability** | Business hours     | 24/7              |
+| **Use Cases**    | Scheduled payments | Urgent transfers  |
+| **Settlement**   | Batch processing   | Real-time         |
 
 ## 🔧 Implementation Tasks
 
@@ -226,4 +268,3 @@ public class SWIFTNetworkService {
 ## 🚀 Bước tiếp theo
 
 Sẵn sàng cho **Week 5: Hash & Signature** - Học về SHA256, Merkle Tree
-

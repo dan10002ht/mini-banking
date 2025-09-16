@@ -1,42 +1,117 @@
-# 📚 Week 5: Hash & Signature
+# 🔐 Week 5: Hash & Signature
 
 ## 🎯 Mục tiêu
 
-Học về Hash functions và Digital signatures - nền tảng cho blockchain.
+Nắm vững nền tảng cryptography để hiểu blockchain:
+
+- SHA256 hash function
+- Merkle Tree structure
+- Digital signatures
+- Hash chains
 
 ## 📖 Nội dung học tập
 
 ### 1. Hash Functions
 
-- **SHA256**: Secure Hash Algorithm 256-bit
-- **Merkle Tree**: Cấu trúc dữ liệu để verify integrity
-- **Hash Properties**: Deterministic, one-way, collision-resistant
+#### SHA256 (Secure Hash Algorithm 256-bit)
 
-### 2. Digital Signatures
+**Định nghĩa**: Hàm băm một chiều tạo ra output 256-bit từ input bất kỳ.
 
-- **RSA**: Rivest-Shamir-Adleman algorithm
-- **ECDSA**: Elliptic Curve Digital Signature Algorithm
-- **Signature Process**: Sign, Verify, Key Management
+**Đặc điểm**:
 
-### 3. Merkle Tree
+- **Deterministic**: Cùng input → cùng output
+- **One-way**: Không thể reverse từ hash về input
+- **Avalanche effect**: Thay đổi nhỏ → hash hoàn toàn khác
+- **Fixed length**: Luôn 256-bit (64 hex characters)
 
-- **Cấu trúc**: Binary tree với hash values
-- **Ứng dụng**: Blockchain, Git, File systems
-- **Benefits**: Efficient verification, tamper detection
+#### SHA256 Properties
 
-## 🔐 Hash Functions
+```
+Input: "Hello World"
+SHA256: a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146
 
-### SHA256
+Input: "Hello World!"
+SHA256: 7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069
+```
+
+**Avalanche Effect Example**:
+
+```
+"Hello"     → 2ef7bde608ce5404e97d5f042f95f89f1c232871
+"Hello!"    → 334d016f755cd6dc58c53a86e183882f8ec14f52fb05345887c8a5edd42c87b7
+```
+
+### 2. Merkle Tree
+
+#### Cấu trúc Merkle Tree
+
+**Định nghĩa**: Cây nhị phân chứa hash của tất cả transactions.
+
+```
+        Root Hash
+       /         \
+   Hash(AB)    Hash(CD)
+   /     \     /     \
+Hash(A) Hash(B) Hash(C) Hash(D)
+   |       |       |       |
+  TX1     TX2     TX3     TX4
+```
+
+#### Merkle Tree Properties
+
+- **Leaf nodes**: Hash của individual transactions
+- **Internal nodes**: Hash của 2 child nodes
+- **Root hash**: Đại diện cho toàn bộ tree
+- **Proof**: Có thể verify transaction mà không cần toàn bộ tree
+
+### 3. Digital Signatures
+
+#### ECDSA (Elliptic Curve Digital Signature Algorithm)
+
+**Components**:
+
+- **Private Key**: 256-bit random number
+- **Public Key**: Derived from private key
+- **Signature**: (r, s) pair created with private key
+
+#### Signature Process
+
+```
+1. Hash message: H = SHA256(message)
+2. Generate random k
+3. Calculate r = (k * G).x mod n
+4. Calculate s = k^(-1) * (H + r * private_key) mod n
+5. Signature = (r, s)
+```
+
+#### Verification Process
+
+```
+1. Hash message: H = SHA256(message)
+2. Calculate u1 = s^(-1) * H mod n
+3. Calculate u2 = s^(-1) * r mod n
+4. Calculate P = u1 * G + u2 * public_key
+5. Verify: P.x mod n == r
+```
+
+## 💻 Implementation
+
+### SHA256 Implementation
 
 ```java
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class HashExample {
-    public static String sha256(String input) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(input.getBytes());
-        return bytesToHex(hash);
+public class HashUtils {
+
+    public static String sha256(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes("UTF-8"));
+            return bytesToHex(hash);
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static String bytesToHex(byte[] bytes) {
@@ -49,50 +124,41 @@ public class HashExample {
 }
 ```
 
-### Hash Properties
-
-- **Deterministic**: Cùng input → cùng output
-- **One-way**: Không thể reverse từ hash về input
-- **Collision-resistant**: Khó tìm 2 inputs có cùng hash
-- **Fixed length**: SHA256 luôn tạo ra 256-bit (64 hex characters)
-
-## 🌳 Merkle Tree
-
-### Cấu trúc Merkle Tree
-
-```
-        Root Hash
-       /         \
-   Hash AB      Hash CD
-   /     \      /     \
-Hash A  Hash B Hash C Hash D
-  |       |      |       |
-Data A  Data B Data C Data D
-```
-
 ### Merkle Tree Implementation
 
 ```java
+import java.util.ArrayList;
+import java.util.List;
+
 public class MerkleTree {
+
     private List<String> transactions;
     private String rootHash;
 
     public MerkleTree(List<String> transactions) {
         this.transactions = transactions;
-        this.rootHash = buildMerkleTree();
+        this.rootHash = buildTree();
     }
 
-    private String buildMerkleTree() {
-        List<String> currentLevel = new ArrayList<>(transactions);
+    private String buildTree() {
+        List<String> currentLevel = new ArrayList<>();
 
+        // Hash all transactions
+        for (String tx : transactions) {
+            currentLevel.add(sha256(tx));
+        }
+
+        // Build tree bottom-up
         while (currentLevel.size() > 1) {
             List<String> nextLevel = new ArrayList<>();
 
             for (int i = 0; i < currentLevel.size(); i += 2) {
                 String left = currentLevel.get(i);
-                String right = (i + 1 < currentLevel.size()) ? currentLevel.get(i + 1) : left;
-                String combined = left + right;
-                nextLevel.add(sha256(combined));
+                String right = (i + 1 < currentLevel.size())
+                    ? currentLevel.get(i + 1)
+                    : left; // Duplicate last element if odd
+
+                nextLevel.add(sha256(left + right));
             }
 
             currentLevel = nextLevel;
@@ -101,147 +167,232 @@ public class MerkleTree {
         return currentLevel.get(0);
     }
 
-    public boolean verifyTransaction(String transaction) {
-        // Verify transaction is in Merkle tree
-        return transactions.contains(transaction);
+    public String getRootHash() {
+        return rootHash;
+    }
+
+    public boolean verifyTransaction(String transaction, List<String> proof) {
+        String hash = sha256(transaction);
+
+        for (String sibling : proof) {
+            hash = sha256(hash + sibling);
+        }
+
+        return hash.equals(rootHash);
     }
 }
 ```
 
-## ✍️ Digital Signatures
-
-### RSA Signature
-
-```java
-import java.security.*;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
-
-public class RSASignature {
-    private PrivateKey privateKey;
-    private PublicKey publicKey;
-
-    public void generateKeyPair() throws NoSuchAlgorithmException {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-        keyGen.initialize(2048);
-        KeyPair pair = keyGen.generateKeyPair();
-        this.privateKey = pair.getPrivate();
-        this.publicKey = pair.getPublic();
-    }
-
-    public byte[] sign(String message) throws Exception {
-        Signature signature = Signature.getInstance("SHA256withRSA");
-        signature.initSign(privateKey);
-        signature.update(message.getBytes());
-        return signature.sign();
-    }
-
-    public boolean verify(String message, byte[] signature) throws Exception {
-        Signature sig = Signature.getInstance("SHA256withRSA");
-        sig.initVerify(publicKey);
-        sig.update(message.getBytes());
-        return sig.verify(signature);
-    }
-}
-```
-
-### ECDSA Signature
+### Digital Signature Implementation
 
 ```java
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.ECPoint;
+import java.security.spec.ECPublicKeySpec;
+import java.math.BigInteger;
 
-public class ECDSASignature {
-    private PrivateKey privateKey;
-    private PublicKey publicKey;
+public class DigitalSignature {
 
-    public void generateKeyPair() throws Exception {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
-        ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1");
-        keyGen.initialize(ecSpec);
-        KeyPair pair = keyGen.generateKeyPair();
-        this.privateKey = pair.getPrivate();
-        this.publicKey = pair.getPublic();
+    private KeyPair keyPair;
+
+    public DigitalSignature() {
+        generateKeyPair();
     }
 
-    public byte[] sign(String message) throws Exception {
-        Signature signature = Signature.getInstance("SHA256withECDSA");
-        signature.initSign(privateKey);
-        signature.update(message.getBytes());
-        return signature.sign();
+    private void generateKeyPair() {
+        try {
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
+            ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1");
+            keyGen.initialize(ecSpec);
+            this.keyPair = keyGen.generateKeyPair();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public boolean verify(String message, byte[] signature) throws Exception {
-        Signature sig = Signature.getInstance("SHA256withECDSA");
-        sig.initVerify(publicKey);
-        sig.update(message.getBytes());
-        return sig.verify(signature);
+    public byte[] sign(String message) {
+        try {
+            Signature signature = Signature.getInstance("SHA256withECDSA");
+            signature.initSign(keyPair.getPrivate());
+            signature.update(message.getBytes());
+            return signature.sign();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean verify(String message, byte[] signature) {
+        try {
+            Signature sig = Signature.getInstance("SHA256withECDSA");
+            sig.initVerify(keyPair.getPublic());
+            sig.update(message.getBytes());
+            return sig.verify(signature);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public PublicKey getPublicKey() {
+        return keyPair.getPublic();
     }
 }
 ```
 
-## 🏦 Banking Applications
+## 🔧 Banking Use Cases
 
-### Transaction Signing
+### 1. Transaction Integrity
 
 ```java
-public class BankingTransaction {
-    private String transactionId;
-    private String fromAccount;
-    private String toAccount;
+public class Transaction {
+    private String from;
+    private String to;
     private BigDecimal amount;
-    private String signature;
+    private long timestamp;
+    private String hash;
+    private byte[] signature;
 
-    public void sign(PrivateKey privateKey) throws Exception {
-        String message = transactionId + fromAccount + toAccount + amount.toString();
-        ECDSASignature signer = new ECDSASignature();
-        signer.setPrivateKey(privateKey);
-        this.signature = Base64.getEncoder().encodeToString(signer.sign(message));
+    public Transaction(String from, String to, BigDecimal amount) {
+        this.from = from;
+        this.to = to;
+        this.amount = amount;
+        this.timestamp = System.currentTimeMillis();
+        this.hash = calculateHash();
     }
 
-    public boolean verify(PublicKey publicKey) throws Exception {
-        String message = transactionId + fromAccount + toAccount + amount.toString();
-        ECDSASignature verifier = new ECDSASignature();
-        verifier.setPublicKey(publicKey);
-        return verifier.verify(message, Base64.getDecoder().decode(signature));
+    private String calculateHash() {
+        String data = from + to + amount.toString() + timestamp;
+        return HashUtils.sha256(data);
+    }
+
+    public void sign(PrivateKey privateKey) {
+        try {
+            Signature signature = Signature.getInstance("SHA256withECDSA");
+            signature.initSign(privateKey);
+            signature.update(this.hash.getBytes());
+            this.signature = signature.sign();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean verifySignature(PublicKey publicKey) {
+        try {
+            Signature sig = Signature.getInstance("SHA256withECDSA");
+            sig.initVerify(publicKey);
+            sig.update(this.hash.getBytes());
+            return sig.verify(this.signature);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
 ```
 
-### Merkle Tree for Transaction Batch
+### 2. Block Structure
 
 ```java
-public class TransactionBatch {
-    private List<BankingTransaction> transactions;
-    private MerkleTree merkleTree;
+public class Block {
+    private String previousHash;
+    private List<Transaction> transactions;
+    private String merkleRoot;
+    private long timestamp;
+    private int nonce;
+    private String hash;
 
-    public TransactionBatch(List<BankingTransaction> transactions) {
+    public Block(String previousHash, List<Transaction> transactions) {
+        this.previousHash = previousHash;
         this.transactions = transactions;
-        List<String> transactionHashes = transactions.stream()
-            .map(t -> sha256(t.toString()))
+        this.timestamp = System.currentTimeMillis();
+        this.merkleRoot = calculateMerkleRoot();
+        this.hash = calculateHash();
+    }
+
+    private String calculateMerkleRoot() {
+        List<String> txHashes = transactions.stream()
+            .map(Transaction::getHash)
             .collect(Collectors.toList());
-        this.merkleTree = new MerkleTree(transactionHashes);
+
+        MerkleTree tree = new MerkleTree(txHashes);
+        return tree.getRootHash();
     }
 
-    public String getRootHash() {
-        return merkleTree.getRootHash();
+    private String calculateHash() {
+        String data = previousHash + merkleRoot + timestamp + nonce;
+        return HashUtils.sha256(data);
     }
 
-    public boolean verifyTransaction(BankingTransaction transaction) {
-        return merkleTree.verifyTransaction(sha256(transaction.toString()));
+    public void mine(int difficulty) {
+        String target = "0".repeat(difficulty);
+
+        while (!hash.substring(0, difficulty).equals(target)) {
+            nonce++;
+            hash = calculateHash();
+        }
     }
 }
 ```
 
-## 🔧 Implementation Tasks
+## 🧪 Testing
 
-### Week 5: Hash & Signature
+### Hash Function Tests
 
-- [ ] Implement SHA256 hash function
-- [ ] Build Merkle Tree structure
-- [ ] Create RSA signature system
-- [ ] Create ECDSA signature system
-- [ ] Apply to banking transactions
+```java
+@Test
+public void testSHA256() {
+    String input = "Hello World";
+    String expected = "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146";
+    String actual = HashUtils.sha256(input);
+    assertEquals(expected, actual);
+}
+
+@Test
+public void testAvalancheEffect() {
+    String input1 = "Hello";
+    String input2 = "Hello!";
+
+    String hash1 = HashUtils.sha256(input1);
+    String hash2 = HashUtils.sha256(input2);
+
+    // Hashes should be completely different
+    assertNotEquals(hash1, hash2);
+}
+```
+
+### Merkle Tree Tests
+
+```java
+@Test
+public void testMerkleTree() {
+    List<String> transactions = Arrays.asList(
+        "TX1: Alice -> Bob 100",
+        "TX2: Bob -> Charlie 50",
+        "TX3: Charlie -> Alice 25",
+        "TX4: Alice -> David 75"
+    );
+
+    MerkleTree tree = new MerkleTree(transactions);
+    String rootHash = tree.getRootHash();
+
+    assertNotNull(rootHash);
+    assertEquals(64, rootHash.length()); // 256-bit = 64 hex chars
+}
+
+@Test
+public void testMerkleProof() {
+    List<String> transactions = Arrays.asList("TX1", "TX2", "TX3", "TX4");
+    MerkleTree tree = new MerkleTree(transactions);
+
+    // Verify TX1 is in the tree
+    List<String> proof = Arrays.asList(
+        "hash(TX2)",
+        "hash(hash(TX3) + hash(TX4))"
+    );
+
+    assertTrue(tree.verifyTransaction("TX1", proof));
+}
+```
 
 ## 🎯 Kết quả đạt được
 
@@ -249,24 +400,23 @@ public class TransactionBatch {
 
 - ✅ Hiểu SHA256 hash function
 - ✅ Nắm vững Merkle Tree structure
-- ✅ Biết RSA và ECDSA signatures
-- ✅ Ứng dụng trong banking
+- ✅ Digital signatures với ECDSA
+- ✅ Hash chains trong blockchain
 
 ### Thực hành
 
-- ✅ Hash function implementation
-- ✅ Merkle Tree implementation
-- ✅ Digital signature system
-- ✅ Transaction signing và verification
+- ✅ Implement SHA256
+- ✅ Build Merkle Tree
+- ✅ Digital signature generation/verification
+- ✅ Transaction integrity checking
 
 ### Kỹ năng
 
-- ✅ Cryptographic operations
-- ✅ Data integrity verification
-- ✅ Digital signature management
-- ✅ Security best practices
+- ✅ Cryptography fundamentals
+- ✅ Hash function implementation
+- ✅ Digital signature systems
+- ✅ Blockchain data structures
 
 ## 🚀 Bước tiếp theo
 
-Sẵn sàng cho **Week 6: Public Key Cryptography** - Học về RSA, ECDSA, Diffie-Hellman
-
+Sẵn sàng cho **Week 6: Public Key Cryptography** - Học RSA, ECDSA, Diffie-Hellman
