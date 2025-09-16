@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: mini-banking-postgres-dev
+    environment:
+      POSTGRES_DB: mini_banking
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
+    networks:
+      - banking-network
+
+volumes:
+  postgres_data:
+
+networks:
+  banking-network:
+    driver: bridge

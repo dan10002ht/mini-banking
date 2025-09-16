@@ -1,6 +1,8 @@
 package com.minibanking.controller;
 
+import com.minibanking.dto.CreateAccountRequest;
 import com.minibanking.entity.Account;
+import com.minibanking.entity.Customer;
 import com.minibanking.service.BankingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,17 +29,33 @@ public class AccountController {
     @Autowired
     private BankingService bankingService;
     
-    @Operation(summary = "Create a new account", description = "Creates a new bank account for a customer")
+    @Operation(summary = "Create a new account", description = "Creates a new bank account for a customer with minimal required information")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Account created successfully",
                 content = @Content(mediaType = "application/json", schema = @Schema(implementation = Account.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid account data")
+        @ApiResponse(responseCode = "400", description = "Invalid account data"),
+        @ApiResponse(responseCode = "404", description = "Customer not found")
     })
     @PostMapping
     public ResponseEntity<Account> createAccount(
-            @Parameter(description = "Account information", required = true)
-            @RequestBody Account account) {
+            @Parameter(description = "Account creation request", required = true)
+            @RequestBody CreateAccountRequest request) {
         try {
+            // Get customer by ID
+            Customer customer = bankingService.getCustomerById(request.getCustomerId())
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+            
+            // Create account entity from DTO
+            Account account = new Account();
+            account.setAccountNumber(request.getAccountNumber());
+            account.setCustomer(customer);
+            account.setAccountType(request.getAccountType());
+            account.setCurrency(request.getCurrency());
+            account.setBalance(request.getInitialBalance());
+            account.setAvailableBalance(request.getInitialBalance());
+            account.setCreditLimit(request.getCreditLimit());
+            account.setInterestRate(request.getInterestRate());
+            
             Account createdAccount = bankingService.createAccount(account);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdAccount);
         } catch (Exception e) {

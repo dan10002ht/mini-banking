@@ -1,0 +1,4 @@
+com/minibanking/crypto/DigitalSignatureTest.class
+com/minibanking/crypto/HashUtilsTest.class
+com/minibanking/crypto/RSAUtilsTest.class
+com/minibanking/crypto/DiffieHellmanUtilsTest.class

@@ -3,7 +3,7 @@ spring:
     name: mini-banking
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/mini_banking
+    url: jdbc:postgresql://localhost:5433/mini_banking
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
