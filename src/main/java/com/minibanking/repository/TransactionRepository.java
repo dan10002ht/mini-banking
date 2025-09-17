@@ -60,5 +60,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     
     @Query("SELECT t FROM Transaction t LEFT JOIN FETCH t.fromAccount LEFT JOIN FETCH t.toAccount WHERE t.transactionId = :transactionId")
     Optional<Transaction> findByIdWithAccounts(@Param("transactionId") UUID transactionId);
+    
+    // Blockchain queries
+    List<Transaction> findByBlockId(UUID blockId);
+    
+    List<Transaction> findByIsConfirmedTrue();
+    
+    List<Transaction> findByIsConfirmedFalse();
+    
+    @Query("SELECT t FROM Transaction t WHERE t.blockId = :blockId AND t.isConfirmed = true")
+    List<Transaction> findConfirmedTransactionsInBlock(@Param("blockId") UUID blockId);
+    
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.blockId = :blockId")
+    long countTransactionsInBlock(@Param("blockId") UUID blockId);
+    
+    @Query("SELECT t FROM Transaction t WHERE t.transactionHash = :transactionHash")
+    Optional<Transaction> findByTransactionHash(@Param("transactionHash") String transactionHash);
+    
+    @Query("SELECT t FROM Transaction t JOIN Block b ON t.blockId = b.blockId WHERE b.blockNumber BETWEEN :startBlock AND :endBlock")
+    List<Transaction> findByBlockNumberRange(@Param("startBlock") Long startBlock, @Param("endBlock") Long endBlock);
+    
+    @Query("SELECT t FROM Transaction t JOIN Block b ON t.blockId = b.blockId WHERE b.blockNumber = :blockNumber")
+    List<Transaction> findByBlockNumber(@Param("blockNumber") Long blockNumber);
 }
 

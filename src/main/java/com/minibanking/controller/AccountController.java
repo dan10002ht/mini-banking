@@ -3,7 +3,7 @@ package com.minibanking.controller;
 import com.minibanking.dto.CreateAccountRequest;
 import com.minibanking.entity.Account;
 import com.minibanking.entity.Customer;
-import com.minibanking.service.BankingService;
+import com.minibanking.interfaces.IBankingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,7 +27,7 @@ import java.util.UUID;
 public class AccountController {
     
     @Autowired
-    private BankingService bankingService;
+    private IBankingService bankingService;
     
     @Operation(summary = "Create a new account", description = "Creates a new bank account for a customer with minimal required information")
     @ApiResponses(value = {

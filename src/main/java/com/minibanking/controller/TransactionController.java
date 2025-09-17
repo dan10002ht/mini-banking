@@ -3,7 +3,7 @@ package com.minibanking.controller;
 import com.minibanking.entity.Transaction;
 import com.minibanking.exception.AccountNotFoundException;
 import com.minibanking.exception.InsufficientFundsException;
-import com.minibanking.service.BankingService;
+import com.minibanking.interfaces.IBankingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,7 +27,7 @@ import java.util.UUID;
 public class TransactionController {
     
     @Autowired
-    private BankingService bankingService;
+    private IBankingService bankingService;
     
     @Operation(summary = "Get transaction by ID", description = "Retrieves a transaction by its unique identifier")
     @ApiResponses(value = {

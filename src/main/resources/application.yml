@@ -28,6 +28,20 @@ spring:
         order_inserts: true
         order_updates: true
 
+  # Redis Configuration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: # No password for local Redis
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
   security:
     user:
       name: admin
@@ -58,3 +72,52 @@ springdoc:
     enabled: true
   show-actuator: true
   packages-to-scan: com.minibanking
+
+# Service Configuration
+banking:
+  service:
+    type: standard # Options: standard, premium, crypto
+  merkle:
+    type: standard # Options: standard, optimized, memory-efficient
+
+# Merkle Service Configuration
+merkle:
+  service:
+    type: standard # Options: standard, optimized, memory-efficient
+  cache:
+    enabled: true
+    max-size: 10000
+    ttl: 3600 # seconds
+
+# Blockchain Configuration
+blockchain:
+  mining:
+    difficulty: 4 # Number of leading zeros required
+    batch-size: 10 # Transactions per block
+    batch-timeout: 5000 # milliseconds
+  streams:
+    transaction-stream: "transaction-events"
+    blockchain-stream: "blockchain-events"
+    consumer-group: "blockchain-processors"
+    consumer-name: "blockchain-processor-1"
+
+# JWT Configuration
+jwt:
+  secret: mySecretKey123456789012345678901234567890
+  expiration: 86400 # 24 hours in seconds
+  refresh-expiration: 604800 # 7 days in seconds
+
+# OTP Configuration
+otp:
+  length: 6
+  expiration: 300 # 5 minutes in seconds
+  max-attempts: 3
+
+# Data Encryption Configuration
+encryption:
+  algorithm: AES
+  key-size: 256
+  iv-length: 12
+  tag-length: 128
+  enable-api-encryption: false # Set to true for production
+  enable-log-masking: true

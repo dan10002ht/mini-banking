@@ -1,10 +1,10 @@
 # Crypto Folder Optimization Summary
 
-## 🎯 **Mục tiêu**
+## **Mục tiêu**
 
 Tối ưu hóa folder crypto để chỉ giữ lại 1 implementation duy nhất, tích hợp tất cả tính năng production practice.
 
-## ❌ **Đã xóa các file không cần thiết:**
+## **Đã xóa các file không cần thiết:**
 
 ### 1. **CryptoDemo.java** - Demo class
 
@@ -26,7 +26,7 @@ Tối ưu hóa folder crypto để chỉ giữ lại 1 implementation duy nhất
 - Đã được tích hợp vào BankingMerkleService
 - Tránh duplicate code
 
-## ✅ **Giữ lại 3 file cần thiết:**
+## **Giữ lại 3 file cần thiết:**
 
 ### 1. **HashUtils.java** - Core utility
 
@@ -56,7 +56,7 @@ Tối ưu hóa folder crypto để chỉ giữ lại 1 implementation duy nhất
 - Production-ready với Spring @Service
 ```
 
-## 🚀 **Tính năng Production Practice trong BankingMerkleService:**
+## **Tính năng Production Practice trong BankingMerkleService:**
 
 ### **Memory Optimization:**
 
@@ -90,7 +90,7 @@ Tối ưu hóa folder crypto để chỉ giữ lại 1 implementation duy nhất
 - getTreeHeight(blockHash)
 ```
 
-## 📊 **Kết quả:**
+## **Kết quả:**
 
 ### **Trước khi tối ưu:**
 
@@ -107,7 +107,7 @@ Tối ưu hóa folder crypto để chỉ giữ lại 1 implementation duy nhất
 - Memory optimized
 - Clean architecture
 
-## 🎉 **Lợi ích:**
+## **Lợi ích:**
 
 1. **Code Cleaner:** Chỉ 1 implementation duy nhất
 2. **Memory Efficient:** Chỉ lưu metadata, không lưu toàn bộ tree
@@ -115,7 +115,7 @@ Tối ưu hóa folder crypto để chỉ giữ lại 1 implementation duy nhất
 4. **Maintainable:** Dễ maintain và extend
 5. **Banking Focused:** Tối ưu cho banking use cases
 
-## 🔧 **Cách sử dụng:**
+## **Cách sử dụng:**
 
 ```java
 @Autowired

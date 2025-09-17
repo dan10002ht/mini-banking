@@ -63,7 +63,29 @@ CREATE TABLE transactions (
     failure_reason TEXT,
     processed_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- Blockchain fields
+    block_id UUID REFERENCES blocks(block_id),
+    transaction_hash VARCHAR(64) UNIQUE,
+    merkle_proof TEXT,
+    is_confirmed BOOLEAN DEFAULT FALSE,
+    confirmation_count INTEGER DEFAULT 0
+);
+
+-- Blockchain tables
+CREATE TABLE blocks (
+    block_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    block_number BIGINT UNIQUE NOT NULL,
+    previous_hash VARCHAR(64),
+    merkle_root VARCHAR(64) NOT NULL,
+    block_hash VARCHAR(64) UNIQUE NOT NULL,
+    nonce BIGINT DEFAULT 0,
+    difficulty INTEGER DEFAULT 4,
+    transaction_count INTEGER DEFAULT 0,
+    timestamp TIMESTAMP NOT NULL,
+    size_bytes BIGINT DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes
@@ -81,6 +103,18 @@ CREATE INDEX idx_transactions_to_account ON transactions(to_account_id);
 CREATE INDEX idx_transactions_created_at ON transactions(created_at);
 CREATE INDEX idx_transactions_status ON transactions(status);
 CREATE INDEX idx_transactions_type ON transactions(transaction_type);
+
+-- Blockchain indexes for transactions
+CREATE INDEX idx_transactions_block_id ON transactions(block_id);
+CREATE INDEX idx_transactions_transaction_hash ON transactions(transaction_hash);
+CREATE INDEX idx_transactions_is_confirmed ON transactions(is_confirmed);
+CREATE INDEX idx_transactions_confirmation_count ON transactions(confirmation_count);
+
+-- Blockchain indexes
+CREATE INDEX idx_blocks_block_number ON blocks(block_number);
+CREATE INDEX idx_blocks_block_hash ON blocks(block_hash);
+CREATE INDEX idx_blocks_status ON blocks(status);
+CREATE INDEX idx_blocks_timestamp ON blocks(timestamp);
 
 -- Create composite indexes
 CREATE INDEX idx_transactions_account_date ON transactions(from_account_id, created_at);
@@ -141,6 +175,89 @@ FROM transactions
 WHERE status = 'COMPLETED'
 GROUP BY DATE(created_at), transaction_type
 ORDER BY transaction_date DESC;
+
+-- Authentication and Device Management Tables
+CREATE TABLE devices (
+    device_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    device_fingerprint VARCHAR(255) UNIQUE NOT NULL,
+    device_name VARCHAR(100),
+    device_type VARCHAR(50),
+    os_name VARCHAR(50),
+    os_version VARCHAR(50),
+    browser_name VARCHAR(50),
+    browser_version VARCHAR(50),
+    ip_address VARCHAR(45),
+    user_agent VARCHAR(500),
+    is_trusted BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    last_login TIMESTAMP,
+    last_activity TIMESTAMP,
+    login_count INTEGER DEFAULT 0,
+    failed_login_attempts INTEGER DEFAULT 0,
+    locked_until TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+);
+
+CREATE TABLE sessions (
+    session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    device_fingerprint VARCHAR(255),
+    token_hash VARCHAR(255) NOT NULL,
+    refresh_token_hash VARCHAR(255),
+    ip_address VARCHAR(45),
+    user_agent VARCHAR(500),
+    is_active BOOLEAN DEFAULT TRUE,
+    is_temporary BOOLEAN DEFAULT FALSE,
+    expires_at TIMESTAMP NOT NULL,
+    last_activity TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+);
+
+-- Indexes for authentication tables
+CREATE INDEX idx_devices_user_id ON devices(user_id);
+CREATE INDEX idx_devices_fingerprint ON devices(device_fingerprint);
+CREATE INDEX idx_devices_trusted ON devices(user_id, is_trusted, is_active);
+CREATE INDEX idx_devices_last_login ON devices(last_login);
+CREATE INDEX idx_devices_locked ON devices(locked_until);
+
+CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX idx_sessions_token_hash ON sessions(token_hash);
+CREATE INDEX idx_sessions_refresh_token ON sessions(refresh_token_hash);
+CREATE INDEX idx_sessions_device ON sessions(user_id, device_fingerprint);
+CREATE INDEX idx_sessions_expires ON sessions(expires_at);
+CREATE INDEX idx_sessions_active ON sessions(is_active, expires_at);
+
+-- Views for authentication
+CREATE VIEW device_summary AS
+SELECT 
+    d.user_id,
+    c.customer_code,
+    c.first_name,
+    c.last_name,
+    COUNT(*) as total_devices,
+    COUNT(CASE WHEN d.is_trusted = TRUE AND d.is_active = TRUE THEN 1 END) as trusted_devices,
+    COUNT(CASE WHEN d.is_trusted = FALSE AND d.is_active = TRUE THEN 1 END) as untrusted_devices,
+    COUNT(CASE WHEN d.is_active = FALSE THEN 1 END) as inactive_devices,
+    MAX(d.last_login) as last_device_login
+FROM devices d
+JOIN customers c ON d.user_id = c.customer_id
+GROUP BY d.user_id, c.customer_code, c.first_name, c.last_name;
+
+CREATE VIEW session_summary AS
+SELECT 
+    s.user_id,
+    c.customer_code,
+    COUNT(*) as total_sessions,
+    COUNT(CASE WHEN s.is_active = TRUE AND s.expires_at > NOW() THEN 1 END) as active_sessions,
+    COUNT(CASE WHEN s.is_temporary = TRUE THEN 1 END) as temporary_sessions,
+    MAX(s.last_activity) as last_activity
+FROM sessions s
+JOIN customers c ON s.user_id = c.customer_id
+GROUP BY s.user_id, c.customer_code;
 
 
 

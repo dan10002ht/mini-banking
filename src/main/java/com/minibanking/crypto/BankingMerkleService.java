@@ -1,5 +1,6 @@
 package com.minibanking.crypto;
 
+import com.minibanking.interfaces.IMerkleService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
  * Only stores root hashes, builds tree on-demand for verification
  */
 @Service
-public class BankingMerkleService {
+public class BankingMerkleService implements IMerkleService {
     
     // Cache for root hashes (only metadata)
     private final Map<String, String> rootHashCache = new ConcurrentHashMap<>();

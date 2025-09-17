@@ -69,6 +69,22 @@ public class Transaction {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
+    // Blockchain fields
+    @Column(name = "block_id")
+    private UUID blockId;
+    
+    @Column(name = "transaction_hash", length = 64, unique = true)
+    private String transactionHash;
+    
+    @Column(name = "merkle_proof", columnDefinition = "TEXT")
+    private String merkleProof;
+    
+    @Column(name = "is_confirmed")
+    private Boolean isConfirmed = false;
+    
+    @Column(name = "confirmation_count")
+    private Integer confirmationCount = 0;
+    
     // Constructors
     public Transaction() {}
     
@@ -96,6 +112,32 @@ public class Transaction {
     public void markAsCancelled() {
         this.status = TransactionStatus.CANCELLED;
         this.processedAt = LocalDateTime.now();
+    }
+    
+    // Blockchain Methods
+    public void setBlockInfo(UUID blockId) {
+        this.blockId = blockId;
+    }
+    
+    public void setTransactionHash(String transactionHash) {
+        this.transactionHash = transactionHash;
+    }
+    
+    public void setMerkleProof(String merkleProof) {
+        this.merkleProof = merkleProof;
+    }
+    
+    public void confirm() {
+        this.isConfirmed = true;
+        this.confirmationCount++;
+    }
+    
+    public void addConfirmation() {
+        this.confirmationCount++;
+    }
+    
+    public boolean isBlockConfirmed() {
+        return this.isConfirmed && this.confirmationCount > 0;
     }
     
     public boolean isCompleted() {
@@ -152,6 +194,22 @@ public class Transaction {
     
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    // Blockchain Getters and Setters
+    public UUID getBlockId() { return blockId; }
+    public void setBlockId(UUID blockId) { this.blockId = blockId; }
+    
+    public String getTransactionHash() { return transactionHash; }
+    public void setTransactionHash(String transactionHash) { this.transactionHash = transactionHash; }
+    
+    public String getMerkleProof() { return merkleProof; }
+    public void setMerkleProof(String merkleProof) { this.merkleProof = merkleProof; }
+    
+    public Boolean getIsConfirmed() { return isConfirmed; }
+    public void setIsConfirmed(Boolean isConfirmed) { this.isConfirmed = isConfirmed; }
+    
+    public Integer getConfirmationCount() { return confirmationCount; }
+    public void setConfirmationCount(Integer confirmationCount) { this.confirmationCount = confirmationCount; }
     
     // Enums
     public enum TransactionType {

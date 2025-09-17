@@ -1,5 +1,6 @@
 package com.minibanking.service;
 
+import com.minibanking.interfaces.IBankingService;
 import com.minibanking.entity.Account;
 import com.minibanking.entity.Customer;
 import com.minibanking.entity.Transaction;
@@ -8,6 +9,9 @@ import com.minibanking.exception.InsufficientFundsException;
 import com.minibanking.repository.AccountRepository;
 import com.minibanking.repository.CustomerRepository;
 import com.minibanking.repository.TransactionRepository;
+import com.minibanking.blockchain.TransactionEvent;
+import com.minibanking.blockchain.TransactionStreamProducer;
+import com.minibanking.security.logging.SecureLoggingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +26,7 @@ import java.util.UUID;
 
 @Service
 @Transactional
-public class BankingService {
+public class BankingService implements IBankingService {
     
     private static final Logger logger = LoggerFactory.getLogger(BankingService.class);
     
@@ -34,6 +38,12 @@ public class BankingService {
     
     @Autowired
     private TransactionRepository transactionRepository;
+    
+    @Autowired
+    private TransactionStreamProducer streamProducer;
+    
+    @Autowired
+    private SecureLoggingService secureLoggingService;
     
     // Customer Management
     public Customer createCustomer(Customer customer) {
@@ -131,6 +141,25 @@ public class BankingService {
             transaction.markAsCompleted();
             transaction = transactionRepository.save(transaction);
             
+            // 8. Send transaction to blockchain stream
+            try {
+                TransactionEvent transactionEvent = new TransactionEvent(transaction);
+                streamProducer.sendTransactionEvent(transactionEvent);
+                logger.info("Transaction event sent to blockchain stream: {}", transactionCode);
+            } catch (Exception e) {
+                logger.warn("Failed to send transaction to blockchain stream: {}", e.getMessage());
+                // Don't fail the transaction if blockchain fails
+            }
+            
+            // 9. Log transfer securely
+            secureLoggingService.logTransfer(
+                fromAccount.getAccountNumber(),
+                toAccount.getAccountNumber(),
+                amount,
+                description,
+                "SUCCESS"
+            );
+            
             logger.info("Transfer completed successfully: {}", transactionCode);
             return transaction;
             
@@ -139,7 +168,13 @@ public class BankingService {
             transaction.markAsFailed(e.getMessage());
             transactionRepository.save(transaction);
             
-            logger.error("Transfer failed: {}", e.getMessage());
+            // Log error securely
+            secureLoggingService.logError("Transfer", e.getMessage(),
+                fromAccount.getAccountNumber(),
+                toAccount.getAccountNumber(),
+                amount.toString()
+            );
+            
             throw e;
         }
     }
@@ -177,6 +212,16 @@ public class BankingService {
             // 6. Mark transaction as completed
             transaction.markAsCompleted();
             transaction = transactionRepository.save(transaction);
+            
+            // 7. Send transaction to blockchain stream
+            try {
+                TransactionEvent transactionEvent = new TransactionEvent(transaction);
+                streamProducer.sendTransactionEvent(transactionEvent);
+                logger.info("Transaction event sent to blockchain stream: {}", transactionCode);
+            } catch (Exception e) {
+                logger.warn("Failed to send transaction to blockchain stream: {}", e.getMessage());
+                // Don't fail the transaction if blockchain fails
+            }
             
             logger.info("Deposit completed successfully: {}", transactionCode);
             return transaction;
@@ -229,6 +274,16 @@ public class BankingService {
             // 7. Mark transaction as completed
             transaction.markAsCompleted();
             transaction = transactionRepository.save(transaction);
+            
+            // 8. Send transaction to blockchain stream
+            try {
+                TransactionEvent transactionEvent = new TransactionEvent(transaction);
+                streamProducer.sendTransactionEvent(transactionEvent);
+                logger.info("Transaction event sent to blockchain stream: {}", transactionCode);
+            } catch (Exception e) {
+                logger.warn("Failed to send transaction to blockchain stream: {}", e.getMessage());
+                // Don't fail the transaction if blockchain fails
+            }
             
             logger.info("Withdrawal completed successfully: {}", transactionCode);
             return transaction;

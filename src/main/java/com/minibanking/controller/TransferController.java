@@ -3,7 +3,7 @@ package com.minibanking.controller;
 import com.minibanking.entity.Transaction;
 import com.minibanking.exception.AccountNotFoundException;
 import com.minibanking.exception.InsufficientFundsException;
-import com.minibanking.service.BankingService;
+import com.minibanking.interfaces.IBankingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,7 +26,7 @@ import java.util.UUID;
 public class TransferController {
     
     @Autowired
-    private BankingService bankingService;
+    private IBankingService bankingService;
     
     @Operation(summary = "Transfer money between accounts", description = "Transfers money from one account to another")
     @ApiResponses(value = {
