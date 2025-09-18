@@ -259,5 +259,49 @@ FROM sessions s
 JOIN customers c ON s.user_id = c.customer_id
 GROUP BY s.user_id, c.customer_code;
 
+-- Validators table for Proof of Authority consensus
+CREATE TABLE validators (
+    validator_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    validator_name VARCHAR(100) UNIQUE NOT NULL,
+    public_key VARCHAR(500),
+    is_authorized BOOLEAN DEFAULT FALSE,
+    priority INTEGER DEFAULT 0,
+    last_block_time TIMESTAMP,
+    blocks_created INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    stake_amount BIGINT DEFAULT 0,
+    node_url VARCHAR(255),
+    last_heartbeat TIMESTAMP,
+    failed_attempts INTEGER DEFAULT 0,
+    locked_until TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for validators table
+CREATE INDEX idx_validators_authorized ON validators(is_authorized, is_active);
+CREATE INDEX idx_validators_priority ON validators(priority DESC);
+CREATE INDEX idx_validators_heartbeat ON validators(last_heartbeat);
+CREATE INDEX idx_validators_blocks_created ON validators(blocks_created DESC);
+CREATE INDEX idx_validators_node_url ON validators(node_url);
+
+-- Validator statistics view
+CREATE VIEW validator_statistics AS
+SELECT 
+    COUNT(*) as total_validators,
+    COUNT(CASE WHEN is_authorized = TRUE THEN 1 END) as authorized_validators,
+    COUNT(CASE WHEN is_active = TRUE THEN 1 END) as active_validators,
+    COUNT(CASE WHEN last_heartbeat > NOW() - INTERVAL '5 minutes' THEN 1 END) as online_validators,
+    COUNT(CASE WHEN is_authorized = TRUE AND is_active = TRUE AND (locked_until IS NULL OR locked_until < NOW()) THEN 1 END) as validators_can_create_block,
+    COUNT(CASE WHEN failed_attempts > 0 THEN 1 END) as validators_with_failed_attempts,
+    SUM(blocks_created) as total_blocks_created
+FROM validators;
+
+-- Insert default validators for testing
+INSERT INTO validators (validator_name, public_key, is_authorized, priority, node_url) VALUES
+('Bank-Validator-1', 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...', TRUE, 100, 'http://localhost:8080'),
+('Bank-Validator-2', 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEB...', TRUE, 90, 'http://localhost:8081'),
+('Bank-Validator-3', 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEC...', TRUE, 80, 'http://localhost:8082');
+
 
 

@@ -1,7 +1,7 @@
 package com.minibanking.controller;
 
-import com.minibanking.blockchain.Block;
-import com.minibanking.blockchain.BlockchainService;
+import com.minibanking.entity.Block;
+import com.minibanking.service.BlockchainService;
 import com.minibanking.blockchain.BlockchainStreamConsumer;
 import com.minibanking.blockchain.TransactionStreamProducer;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,18 +25,18 @@ import java.util.UUID;
 @RequestMapping("/api/blockchain")
 @Tag(name = "Blockchain", description = "Blockchain management and querying")
 public class BlockchainController {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(BlockchainController.class);
-    
+
     @Autowired
     private BlockchainService blockchainService;
-    
+
     @Autowired
     private TransactionStreamProducer streamProducer;
-    
+
     @Autowired
     private BlockchainStreamConsumer streamConsumer;
-    
+
     /**
      * Get blockchain information
      */
@@ -52,7 +52,7 @@ public class BlockchainController {
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     /**
      * Get block by ID
      */
@@ -64,13 +64,13 @@ public class BlockchainController {
             logger.info("Getting block by ID: {}", blockId);
             Optional<Block> block = blockchainService.getBlock(blockId);
             return block.map(ResponseEntity::ok)
-                       .orElse(ResponseEntity.notFound().build());
+                    .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
             logger.error("Error getting block by ID: {}", blockId, e);
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     /**
      * Get block by block number
      */
@@ -82,13 +82,13 @@ public class BlockchainController {
             logger.info("Getting block by number: {}", blockNumber);
             Optional<Block> block = blockchainService.getBlockByNumber(blockNumber);
             return block.map(ResponseEntity::ok)
-                       .orElse(ResponseEntity.notFound().build());
+                    .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
             logger.error("Error getting block by number: {}", blockNumber, e);
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     /**
      * Get latest block
      */
@@ -99,13 +99,13 @@ public class BlockchainController {
             logger.info("Getting latest block");
             Optional<Block> block = blockchainService.getLatestBlock();
             return block.map(ResponseEntity::ok)
-                       .orElse(ResponseEntity.notFound().build());
+                    .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
             logger.error("Error getting latest block", e);
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     /**
      * Get blocks in range
      */
@@ -123,7 +123,7 @@ public class BlockchainController {
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     /**
      * Verify block integrity
      */
@@ -134,20 +134,19 @@ public class BlockchainController {
         try {
             logger.info("Verifying block: {}", blockId);
             boolean isValid = blockchainService.verifyBlock(blockId);
-            
+
             Map<String, Object> response = Map.of(
-                "blockId", blockId,
-                "isValid", isValid,
-                "timestamp", System.currentTimeMillis()
-            );
-            
+                    "blockId", blockId,
+                    "isValid", isValid,
+                    "timestamp", System.currentTimeMillis());
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error verifying block: {}", blockId, e);
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     /**
      * Get stream information
      */
@@ -163,7 +162,7 @@ public class BlockchainController {
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     /**
      * Get consumer status
      */
@@ -179,7 +178,7 @@ public class BlockchainController {
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     /**
      * Initialize consumer group
      */
@@ -189,20 +188,19 @@ public class BlockchainController {
         try {
             logger.info("Initializing consumer group");
             streamConsumer.initializeConsumerGroup();
-            
+
             Map<String, Object> response = Map.of(
-                "status", "success",
-                "message", "Consumer group initialized successfully",
-                "timestamp", System.currentTimeMillis()
-            );
-            
+                    "status", "success",
+                    "message", "Consumer group initialized successfully",
+                    "timestamp", System.currentTimeMillis());
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error initializing consumer group", e);
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     /**
      * Start consumer
      */
@@ -212,13 +210,12 @@ public class BlockchainController {
         try {
             logger.info("Starting consumer");
             streamConsumer.startConsuming();
-            
+
             Map<String, Object> response = Map.of(
-                "status", "success",
-                "message", "Consumer started successfully",
-                "timestamp", System.currentTimeMillis()
-            );
-            
+                    "status", "success",
+                    "message", "Consumer started successfully",
+                    "timestamp", System.currentTimeMillis());
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error starting consumer", e);
